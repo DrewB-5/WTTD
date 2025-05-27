@@ -1,1 +1,3 @@
 # WTTD
+A tower defense game made with C++ and SFML
+...
