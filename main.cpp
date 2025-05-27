@@ -1,12 +1,14 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include "Button.hpp"
-#include "LoadingScreen.hpp"
+#include "src/Button.hpp"
+#include "src/LoadingScreen.hpp"
+#include "src/Level.hpp"
 
 int main()
 {
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
     sf::RenderWindow window(desktopMode, "What The Tower Defense 1.0.4", sf::Style::Fullscreen);
+    window.setFramerateLimit(60);
 
     // Background
     sf::Texture backgroundTexture;
@@ -44,6 +46,11 @@ int main()
     Button placeholderButton("assets/menu/placeholder_button.png", 0.15f, 0.45f, 0.55f, window);
 
     bool isMenuOpen = false;
+    bool loadingTriggered = false;
+    bool gameStarted = false;
+
+    Level level;
+    std::unique_ptr<LoadingScreen> loader;
 
     while (window.isOpen())
     {
@@ -54,7 +61,17 @@ int main()
                 window.close();
 
             if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-                isMenuOpen = false;
+            {
+                if (!gameStarted)
+                    isMenuOpen = false;
+            }
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl) &&
+                event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Q)
+            {
+                std::cout << "Ctrl+Q detected, exiting...\n";
+                return -1;
+            }
 
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
             {
@@ -77,38 +94,64 @@ int main()
                         window.close();
                     }
                 }
-                else
+                else if (!loadingTriggered && placeholderButton.isClicked(mousePosF))
                 {
-                    if (placeholderButton.isClicked(mousePosF))
-                    {
-                        std::cout << "<placeholder> button clicked!\n";
-                        LoadingScreen loading(window);
-                        loading.run();
-                    }
+                    std::cout << "<placeholder> button clicked! Starting loading screen...\n";
+                    loader = std::make_unique<LoadingScreen>(window, level);
+                    loader->startLoading("data/levels/dev_test/dev_test.png");
+                    loadingTriggered = true;
                 }
             }
         }
 
-        // Hover logic
+        // Update
         sf::Vector2f mouseF(sf::Mouse::getPosition(window));
-        playButton.update(mouseF);
-        exitButton.update(mouseF);
-        settingsButton.update(mouseF);
-        if (isMenuOpen)
-            placeholderButton.update(mouseF);
-
-        // Drawing
-        window.clear();
-        window.draw(background);
-        playButton.draw(window);
-        settingsButton.draw(window);
-        exitButton.draw(window);
-
-        if (isMenuOpen)
+        if (!isMenuOpen)
         {
-            window.draw(darkOverlay);
-            window.draw(menuSprite);
-            placeholderButton.draw(window);
+            playButton.update(mouseF);
+            exitButton.update(mouseF);
+            settingsButton.update(mouseF);
+        }
+        else if (!loadingTriggered)
+        {
+            placeholderButton.update(mouseF);
+        }
+
+        if (loadingTriggered && loader)
+        {
+            loader->update();
+            if (loader->isFinished())
+            {
+                loadingTriggered = false;
+                gameStarted = true;
+                loader.reset();
+            }
+        }
+
+        // Draw
+        window.clear();
+
+        if (gameStarted)
+        {
+            level.draw(window);
+        }
+        else if (loadingTriggered && loader)
+        {
+            loader->draw();
+        }
+        else
+        {
+            window.draw(background);
+            playButton.draw(window);
+            settingsButton.draw(window);
+            exitButton.draw(window);
+
+            if (isMenuOpen)
+            {
+                window.draw(darkOverlay);
+                window.draw(menuSprite);
+                placeholderButton.draw(window);
+            }
         }
 
         window.display();

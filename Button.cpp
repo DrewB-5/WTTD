@@ -1,4 +1,3 @@
-// Button.cpp
 #include "Button.hpp"
 #include <iostream>
 
@@ -11,7 +10,6 @@ Button::Button(const std::string &texturePath, float relScale, float relX, float
     }
     sprite.setTexture(texture);
 
-    // Set origin to center so positioning is centered
     sprite.setOrigin(texture.getSize().x / 2.f, texture.getSize().y / 2.f);
 
     float scaleFactorX = (relScale * window.getSize().x) / texture.getSize().x;
