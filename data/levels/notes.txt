@@ -1,0 +1,4 @@
+enemy path, background image (move to be stored in assets), music, obstacles, water
+
+top left (0, 0)
+bottom right (2560, 1440)
