@@ -1,0 +1,1 @@
+should backup config, entire playerdata folder
