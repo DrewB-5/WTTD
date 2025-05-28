@@ -14,8 +14,8 @@ all: bin
 	g++ -c src/Button.cpp $(INCLUDE) $(CFLAGS)
 	g++ -c src/Level.cpp $(INCLUDE) $(CFLAGS)
 	g++ $(OBJS) -o $(FILE).exe $(LIB) $(LIBS)
-	mv $(FILE).exe bin
 	rm $(OBJS)
+	mv $(FILE).exe bin
 
 bin:
 	if not exist bin mkdir bin
