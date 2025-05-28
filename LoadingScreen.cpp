@@ -26,7 +26,9 @@ void LoadingScreen::startLoading(const std::string &levelPath)
     loadingThread = std::thread([this, levelPath]()
                                 {
         std::this_thread::sleep_for(std::chrono::milliseconds(1500)); // Simulate loading time
-        level.loadFromFile(levelPath, window.getSize());
+        // Derive JSON path from image path
+        std::string jsonPath = levelPath.substr(0, levelPath.find_last_of('.')) + ".json";
+        level.loadFromFile(jsonPath, window.getSize());
         isLoading = false; });
 }
 
@@ -34,7 +36,6 @@ void LoadingScreen::update()
 {
     if (!isLoading && !finished)
     {
-        // Start fade + shrink transition
         if (opacity > 0)
         {
             opacity -= 10;

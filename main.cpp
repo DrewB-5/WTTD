@@ -7,8 +7,28 @@
 int main()
 {
     sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-    sf::RenderWindow window(desktopMode, "What The Tower Defense 1.0.4", sf::Style::Fullscreen);
+    sf::RenderWindow window(desktopMode, "What The Tower Defense 1.0.6", sf::Style::Fullscreen);
     window.setFramerateLimit(60);
+
+    sf::Image cursorImage;
+    if (!cursorImage.loadFromFile("assets/ui/cursor.png"))
+    {
+        std::cerr << "Failed to load cursor image!\n";
+    }
+    else
+    {
+        sf::Cursor customCursor;
+        sf::Vector2u hotspot(5, 2);
+
+        if (customCursor.loadFromPixels(cursorImage.getPixelsPtr(), cursorImage.getSize(), hotspot))
+        {
+            window.setMouseCursor(customCursor);
+        }
+        else
+        {
+            std::cerr << "Failed to create custom cursor from image.\n";
+        }
+    }
 
     // Background
     sf::Texture backgroundTexture;
@@ -22,7 +42,7 @@ int main()
         float(window.getSize().x) / backgroundTexture.getSize().x,
         float(window.getSize().y) / backgroundTexture.getSize().y);
 
-    // Menu overlay and background
+    // Menu overlay and dark background
     sf::RectangleShape darkOverlay(sf::Vector2f(window.getSize()));
     darkOverlay.setFillColor(sf::Color(0, 0, 0, 150));
 
@@ -51,6 +71,8 @@ int main()
 
     Level level;
     std::unique_ptr<LoadingScreen> loader;
+
+    sf::Clock clock;
 
     while (window.isOpen())
     {
@@ -98,13 +120,15 @@ int main()
                 {
                     std::cout << "<placeholder> button clicked! Starting loading screen...\n";
                     loader = std::make_unique<LoadingScreen>(window, level);
-                    loader->startLoading("data/levels/dev_test/dev_test.png");
+                    loader->startLoading("data/levels/dev_test/dev_test.json");
                     loadingTriggered = true;
                 }
             }
         }
 
-        // Update
+        float dt = clock.restart().asSeconds();
+
+        // Update buttons and enemy
         sf::Vector2f mouseF(sf::Mouse::getPosition(window));
         if (!isMenuOpen)
         {
@@ -124,16 +148,29 @@ int main()
             {
                 loadingTriggered = false;
                 gameStarted = true;
+
+                // Load enemy sprite when level is ready
+                if (!level.loadEnemySprite("assets/entities/enemies/dev_test.png", window.getSize()))
+                {
+                    std::cerr << "Failed to load enemy sprite!\n";
+                }
+
                 loader.reset();
             }
         }
 
-        // Draw
+        if (gameStarted)
+        {
+            level.updateEnemy(dt);
+        }
+
+        // Draw everything
         window.clear();
 
         if (gameStarted)
         {
             level.draw(window);
+            level.drawEnemy(window);
         }
         else if (loadingTriggered && loader)
         {
